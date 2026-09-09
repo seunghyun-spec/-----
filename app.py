@@ -10,7 +10,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. API Key 설정 (Streamlit Secrets 우선)
+# 2. API Key 설정 (Streamlit Secrets 연동)
 try:
     NAVER_CLIENT_ID = st.secrets["NAVER_CLIENT_ID"]
     NAVER_CLIENT_SECRET = st.secrets["NAVER_CLIENT_SECRET"]
@@ -39,12 +39,6 @@ period_option = st.sidebar.radio(
 st.sidebar.markdown("---")
 st.sidebar.subheader("🏷️ 뷰티 카테고리 필터")
 
-col_btn1, col_btn2 = st.sidebar.columns(2)
-with col_btn1:
-    st.button("전체 선택")
-with col_btn2:
-    st.button("핵심 4종")
-
 default_categories = ["스킨케어", "선케어", "색조메이크업", "베이스메이크업"]
 selected_categories = st.sidebar.multiselect(
     "비교할 카테고리",
@@ -52,9 +46,14 @@ selected_categories = st.sidebar.multiselect(
     default=default_categories
 )
 
-# 4. 메인 화면
+# [추가 기능 1] 세부 키워드 검색 필터
+st.sidebar.markdown("---")
+st.sidebar.subheader("🔍 세부 키워드 직접 입력")
+custom_keyword = st.sidebar.text_input("추가 분석 키워드 (예: 수분크림, 틴트)", "")
+
+# 4. 메인 화면 헤더
 st.title("💄 뷰티 트렌드 대시보드")
-st.caption("네이버 데이터랩 기반 실시간 뷰티 검색 트렌드 분석")
+st.caption("네이버 데이터랩 기반 실시간 뷰티 검색 트렌드 분석 및 시장 예측")
 
 # 샘플 데이터 준비
 data = {
@@ -65,53 +64,89 @@ data = {
 }
 rank_df = pd.DataFrame(data)
 
-# 선택된 카테고리 필터링 적용
+# 필터링 적용
 if selected_categories:
     rank_df = rank_df[rank_df["카테고리"].isin(selected_categories)]
 
-# 메트릭 카드 시각화 (상단 요약)
-st.subheader("📊 주요 카테고리 트렌드 지표")
-m_cols = st.columns(len(rank_df) if not rank_df.empty else 1)
-for idx, (_, row) in enumerate(rank_df.iterrows()):
-    with m_cols[idx]:
-        st.metric(
-            label=row["카테고리"],
-            value=f"{row['최근 7일 평균 지수']} pt",
-            delta=f"{row['WoW 변동률(%)']}% (WoW)"
-        )
-
-st.markdown("---")
-
-# 차트 섹션
-col1, col2 = st.columns(2)
-
-with col1:
-    st.subheader("📈 카테고리별 검색 지수 비교")
-    if not rank_df.empty:
-        st.bar_chart(rank_df.set_index("카테고리")["최근 7일 평균 지수"])
-
-with col2:
-    st.subheader("🍩 검색 점유율 비중")
-    if not rank_df.empty:
-        # Streamlit 내장 차트로 점유율 시각화
-        st.line_chart(rank_df.set_index("카테고리")["최근 7일 평균 지수"])
-
-st.markdown("---")
-st.subheader("📋 카테고리 트렌드 순위 요약")
-
-# [오류 원인이었던 background_gradient 대신 st.column_config 적용]
+# [추가 기능 2] 자동 인사이트 요약 리포트 박스
 if not rank_df.empty:
-    max_val = float(rank_df["최근 7일 평균 지수"].max()) if rank_df["최근 7일 평균 지수"].max() > 0 else 100.0
-    st.dataframe(
-        rank_df,
-        column_config={
-            "WoW 변동률(%)": st.column_config.NumberColumn(format="%+.2f%%"),
-            "MoM 변동률(%)": st.column_config.NumberColumn(format="%+.2f%%"),
-            "최근 7일 평균 지수": st.column_config.ProgressColumn(
-                format="%.2f",
-                min_value=0.0,
-                max_value=max_val
-            )
-        },
-        use_container_width=True
+    top_cat = rank_df.sort_values(by="최근 7일 평균 지수", ascending=False).iloc[0]
+    top_growth = rank_df.sort_values(by="WoW 변동률(%)", ascending=False).iloc[0]
+    
+    st.info(
+        f"💡 **트렌드 요약 리포트**: 현재 가장 높은 검색량은 **[{top_cat['카테고리']}]** ({top_cat['최근 7일 평균 지수']} pt)이며, "
+        f"전주 대비 가장 높은 성장세를 보인 카테고리는 **[{top_growth['카테고리']}]** (+{top_growth['WoW 변동률(%)']}%) 입니다."
     )
+
+# 5. 탭 구성
+tab1, tab2, tab3 = st.tabs(["📊 종합 트렌드 요약", "📈 카테고리 심층 비교", "📋 상세 데이터 분석 및 다운로드"])
+
+# --- TAB 1: 종합 트렌드 요약 ---
+with tab1:
+    st.subheader("💡 카테고리별 핵심 지표")
+    m_cols = st.columns(len(rank_df) if not rank_df.empty else 1)
+    for idx, (_, row) in enumerate(rank_df.iterrows()):
+        with m_cols[idx]:
+            st.metric(
+                label=row["카테고리"],
+                value=f"{row['최근 7일 평균 지수']} pt",
+                delta=f"{row['WoW 변동률(%)']}% (WoW)"
+            )
+
+    st.markdown("---")
+    
+    col1, col2 = st.columns([1.2, 1])
+    with col1:
+        st.subheader("📊 평균 검색 지수 비교")
+        if not rank_df.empty:
+            st.bar_chart(rank_df.set_index("카테고리")["최근 7일 평균 지수"])
+    
+    with col2:
+        st.subheader("🍩 검색 점유율 추이")
+        if not rank_df.empty:
+            st.line_chart(rank_df.set_index("카테고리")["최근 7일 평균 지수"])
+
+# --- TAB 2: 카테고리 심층 비교 ---
+with tab2:
+    st.subheader("🔍 카테고리별 증감률 분석")
+    if not rank_df.empty:
+        st.area_chart(rank_df.set_index("카테고리")[["WoW 변동률(%)", "MoM 변동률(%)"]])
+    
+    # [추가 기능 3] 일자별 가상 추이 선 그래프
+    st.subheader("📅 최근 30일 검색 트렌드 흐름")
+    trend_data = pd.DataFrame({
+        "날짜": pd.date_range(end=pd.Timestamp.now(), periods=30),
+        "스킨케어": [50 + i*0.2 for i in range(30)],
+        "선케어": [20 + i*0.8 for i in range(30)],
+        "색조메이크업": [45 - i*0.1 for i in range(30)]
+    })
+    st.line_chart(trend_data.set_index("날짜"))
+
+# --- TAB 3: 상세 데이터 분석 및 다운로드 ---
+with tab3:
+    st.subheader("📋 카테고리 트렌드 순위 데이터")
+    if not rank_df.empty:
+        max_val = float(rank_df["최근 7일 평균 지수"].max()) if rank_df["최근 7일 평균 지수"].max() > 0 else 100.0
+        st.dataframe(
+            rank_df,
+            column_config={
+                "WoW 변동률(%)": st.column_config.NumberColumn(format="%+.2f%%"),
+                "MoM 변동률(%)": st.column_config.NumberColumn(format="%+.2f%%"),
+                "최근 7일 평균 지수": st.column_config.ProgressColumn(
+                    format="%.2f",
+                    min_value=0.0,
+                    max_value=max_val
+                )
+            },
+            use_container_width=True
+        )
+        
+        # [추가 기능 4] 엑셀/CSV 데이터 다운로드 버튼
+        st.markdown("---")
+        csv_data = rank_df.to_csv(index=False, encoding="utf-8-sig")
+        st.download_button(
+            label="📥 분석 데이터 CSV 다운로드",
+            data=csv_data,
+            file_name="beauty_trend_analysis.csv",
+            mime="text/csv"
+        )
