@@ -22,8 +22,19 @@ API_ENDPOINT = "https://openapi.naver.com/v1/datalab/shopping/categories"
 
 class NaverDataLabClient:
     def __init__(self, client_id: Optional[str] = None, client_secret: Optional[str] = None):
-        self.client_id = client_id or os.getenv("NAVER_CLIENT_ID", "").strip()
-        self.client_secret = client_secret or os.getenv("NAVER_CLIENT_SECRET", "").strip()
+        # 1. 인자로 직접 전달된 키 확인
+        # 2. st.secrets (Streamlit Cloud 및 .streamlit/secrets.toml) 확인
+        # 3. .env 환경변수(os.getenv) fallback
+        if not client_id or not client_secret:
+            try:
+                import streamlit as st
+                client_id = client_id or st.secrets.get("NAVER_CLIENT_ID", "")
+                client_secret = client_secret or st.secrets.get("NAVER_CLIENT_SECRET", "")
+            except Exception:
+                pass
+
+        self.client_id = (client_id or os.getenv("NAVER_CLIENT_ID", "")).strip()
+        self.client_secret = (client_secret or os.getenv("NAVER_CLIENT_SECRET", "")).strip()
         
     def is_configured(self) -> bool:
         """API 키가 실제 값으로 설정되어 있는지 확인"""
