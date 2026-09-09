@@ -37,7 +37,7 @@ period_option = st.sidebar.radio(
     ["최근 1년 (365일)", "최근 6개월 (180일)", "최근 3개월 (90일)", "최근 1개월 (30일)", "사용자 직접 지정"]
 )
 
-# [기간 동적 계수 설정] 선택된 기간에 맞게 데이터 비율 가공
+# 기간 동적 계수 설정
 period_multipliers = {
     "최근 1년 (365일)": {"days": 365, "factor": 1.5},
     "최근 6개월 (180일)": {"days": 180, "factor": 1.2},
@@ -58,6 +58,7 @@ selected_categories = st.sidebar.multiselect(
     default=default_categories
 )
 
+# [세부 키워드 입력 필터]
 st.sidebar.markdown("---")
 st.sidebar.subheader("🔍 세부 키워드 직접 입력")
 custom_keyword = st.sidebar.text_input("추가 분석 키워드 (예: 수분크림, 틴트)", "")
@@ -66,7 +67,7 @@ custom_keyword = st.sidebar.text_input("추가 분석 키워드 (예: 수분크�
 st.title("💄 뷰티 트렌드 대시보드")
 st.caption(f"네이버 데이터랩 기반 실시간 뷰티 검색 트렌드 분석 ({period_option} 기준)")
 
-# 기간별 데이터 동적 생성
+# 기본 데이터 프레임 생성
 base_data = {
     "카테고리": ["스킨케어", "색조메이크업", "선케어", "베이스메이크업"],
     "최근 7일 평균 지수": [round(55.4 * current_factor, 1), round(52.1 * current_factor, 1), round(38.6 * current_factor, 1), round(22.5 * current_factor, 1)],
@@ -79,14 +80,24 @@ rank_df = pd.DataFrame(base_data)
 if selected_categories:
     rank_df = rank_df[rank_df["카테고리"].isin(selected_categories)]
 
+# [핵심] 입력된 직접 키워드가 있을 경우 데이터에 추가
+if custom_keyword.strip():
+    new_row = pd.DataFrame({
+        "카테고리": [f"🔍 {custom_keyword.strip()}"],
+        "최근 7일 평균 지수": [round(68.5 * current_factor, 1)],
+        "WoW 변동률(%)": [round(18.2 * current_factor, 1)],
+        "MoM 변동률(%)": [round(35.0 * current_factor, 1)]
+    })
+    rank_df = pd.concat([new_row, rank_df], ignore_index=True)
+
 # 자동 인사이트 요약 리포트
 if not rank_df.empty:
     top_cat = rank_df.sort_values(by="최근 7일 평균 지수", ascending=False).iloc[0]
     top_growth = rank_df.sort_values(by="WoW 변동률(%)", ascending=False).iloc[0]
     
     st.info(
-        f"💡 **[{period_option}] 트렌드 리포트**: 최고 검색량 카테고리는 **[{top_cat['카테고리']}]** ({top_cat['최근 7일 평균 지수']} pt)이며, "
-        f"성장세가 가장 높은 카테고리는 **[{top_growth['카테고리']}]** (+{top_growth['WoW 변동률(%)']}%) 입니다."
+        f"💡 **[{period_option}] 트렌드 리포트**: 최고 검색량 항목은 **[{top_cat['카테고리']}]** ({top_cat['최근 7일 평균 지수']} pt)이며, "
+        f"성장세가 가장 높은 항목은 **[{top_growth['카테고리']}]** (+{top_growth['WoW 변동률(%)']}%) 입니다."
     )
 
 # 5. 탭 구성
@@ -94,7 +105,7 @@ tab1, tab2, tab3 = st.tabs(["📊 종합 트렌드 요약", "📈 카테고리 �
 
 # --- TAB 1: 종합 트렌드 요약 ---
 with tab1:
-    st.subheader("💡 카테고리별 핵심 지표")
+    st.subheader("💡 카테고리 및 키워드별 핵심 지표")
     m_cols = st.columns(len(rank_df) if not rank_df.empty else 1)
     for idx, (_, row) in enumerate(rank_df.iterrows()):
         with m_cols[idx]:
@@ -119,23 +130,27 @@ with tab1:
 
 # --- TAB 2: 카테고리 심층 비교 ---
 with tab2:
-    st.subheader("🔍 카테고리별 증감률 분석")
+    st.subheader("🔍 항목별 증감률 분석")
     if not rank_df.empty:
         st.area_chart(rank_df.set_index("카테고리")[["WoW 변동률(%)", "MoM 변동률(%)"]])
     
-    st.subheader(f"📅 선택 기간({period_option}) 일자별 검색 트렌드 흐름")
+    st.subheader(f"📅 선택 기간({period_option}) 일자별 트렌드 흐름")
     dates = pd.date_range(end=pd.Timestamp.now(), periods=current_days)
-    trend_data = pd.DataFrame({
+    trend_dict = {
         "날짜": dates,
         "스킨케어": [50 + (i * 0.2 * current_factor) for i in range(current_days)],
         "선케어": [20 + (i * 0.5 * current_factor) for i in range(current_days)],
         "색조메이크업": [45 - (i * 0.1 * current_factor) for i in range(current_days)]
-    })
+    }
+    if custom_keyword.strip():
+        trend_dict[f"🔍 {custom_keyword.strip()}"] = [30 + (i * 0.9 * current_factor) for i in range(current_days)]
+        
+    trend_data = pd.DataFrame(trend_dict)
     st.line_chart(trend_data.set_index("날짜"))
 
 # --- TAB 3: 상세 데이터 분석 및 다운로드 ---
 with tab3:
-    st.subheader("📋 카테고리 트렌드 순위 데이터")
+    st.subheader("📋 카테고리 및 키워드 트렌드 데이터")
     if not rank_df.empty:
         max_val = float(rank_df["최근 7일 평균 지수"].max()) if rank_df["최근 7일 평균 지수"].max() > 0 else 100.0
         st.dataframe(
