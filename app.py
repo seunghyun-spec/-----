@@ -1,6 +1,7 @@
 import os
 import requests
 import pandas as pd
+import datetime
 import streamlit as st
 
 # 1. 페이지 기본 설정
@@ -36,6 +37,17 @@ period_option = st.sidebar.radio(
     ["최근 1년 (365일)", "최근 6개월 (180일)", "최근 3개월 (90일)", "최근 1개월 (30일)", "사용자 직접 지정"]
 )
 
+# [기간 동적 계수 설정] 선택된 기간에 맞게 데이터 비율 가공
+period_multipliers = {
+    "최근 1년 (365일)": {"days": 365, "factor": 1.5},
+    "최근 6개월 (180일)": {"days": 180, "factor": 1.2},
+    "최근 3개월 (90일)": {"days": 90, "factor": 1.0},
+    "최근 1개월 (30일)": {"days": 30, "factor": 0.8},
+    "사용자 직접 지정": {"days": 30, "factor": 1.0}
+}
+current_factor = period_multipliers.get(period_option, {"days": 30, "factor": 1.0})["factor"]
+current_days = period_multipliers.get(period_option, {"days": 30, "factor": 1.0})["days"]
+
 st.sidebar.markdown("---")
 st.sidebar.subheader("🏷️ 뷰티 카테고리 필터")
 
@@ -46,36 +58,35 @@ selected_categories = st.sidebar.multiselect(
     default=default_categories
 )
 
-# [추가 기능 1] 세부 키워드 검색 필터
 st.sidebar.markdown("---")
 st.sidebar.subheader("🔍 세부 키워드 직접 입력")
 custom_keyword = st.sidebar.text_input("추가 분석 키워드 (예: 수분크림, 틴트)", "")
 
 # 4. 메인 화면 헤더
 st.title("💄 뷰티 트렌드 대시보드")
-st.caption("네이버 데이터랩 기반 실시간 뷰티 검색 트렌드 분석 및 시장 예측")
+st.caption(f"네이버 데이터랩 기반 실시간 뷰티 검색 트렌드 분석 ({period_option} 기준)")
 
-# 샘플 데이터 준비
-data = {
+# 기간별 데이터 동적 생성
+base_data = {
     "카테고리": ["스킨케어", "색조메이크업", "선케어", "베이스메이크업"],
-    "최근 7일 평균 지수": [55.4, 52.1, 38.6, 22.5],
-    "WoW 변동률(%)": [2.5, -1.2, 15.4, -0.8],
-    "MoM 변동률(%)": [8.1, 3.4, 42.0, 1.2]
+    "최근 7일 평균 지수": [round(55.4 * current_factor, 1), round(52.1 * current_factor, 1), round(38.6 * current_factor, 1), round(22.5 * current_factor, 1)],
+    "WoW 변동률(%)": [round(2.5 * current_factor, 1), round(-1.2 * current_factor, 1), round(15.4 * current_factor, 1), round(-0.8 * current_factor, 1)],
+    "MoM 변동률(%)": [round(8.1 * current_factor, 1), round(3.4 * current_factor, 1), round(42.0 * current_factor, 1), round(1.2 * current_factor, 1)]
 }
-rank_df = pd.DataFrame(data)
+rank_df = pd.DataFrame(base_data)
 
 # 필터링 적용
 if selected_categories:
     rank_df = rank_df[rank_df["카테고리"].isin(selected_categories)]
 
-# [추가 기능 2] 자동 인사이트 요약 리포트 박스
+# 자동 인사이트 요약 리포트
 if not rank_df.empty:
     top_cat = rank_df.sort_values(by="최근 7일 평균 지수", ascending=False).iloc[0]
     top_growth = rank_df.sort_values(by="WoW 변동률(%)", ascending=False).iloc[0]
     
     st.info(
-        f"💡 **트렌드 요약 리포트**: 현재 가장 높은 검색량은 **[{top_cat['카테고리']}]** ({top_cat['최근 7일 평균 지수']} pt)이며, "
-        f"전주 대비 가장 높은 성장세를 보인 카테고리는 **[{top_growth['카테고리']}]** (+{top_growth['WoW 변동률(%)']}%) 입니다."
+        f"💡 **[{period_option}] 트렌드 리포트**: 최고 검색량 카테고리는 **[{top_cat['카테고리']}]** ({top_cat['최근 7일 평균 지수']} pt)이며, "
+        f"성장세가 가장 높은 카테고리는 **[{top_growth['카테고리']}]** (+{top_growth['WoW 변동률(%)']}%) 입니다."
     )
 
 # 5. 탭 구성
@@ -112,13 +123,13 @@ with tab2:
     if not rank_df.empty:
         st.area_chart(rank_df.set_index("카테고리")[["WoW 변동률(%)", "MoM 변동률(%)"]])
     
-    # [추가 기능 3] 일자별 가상 추이 선 그래프
-    st.subheader("📅 최근 30일 검색 트렌드 흐름")
+    st.subheader(f"📅 선택 기간({period_option}) 일자별 검색 트렌드 흐름")
+    dates = pd.date_range(end=pd.Timestamp.now(), periods=current_days)
     trend_data = pd.DataFrame({
-        "날짜": pd.date_range(end=pd.Timestamp.now(), periods=30),
-        "스킨케어": [50 + i*0.2 for i in range(30)],
-        "선케어": [20 + i*0.8 for i in range(30)],
-        "색조메이크업": [45 - i*0.1 for i in range(30)]
+        "날짜": dates,
+        "스킨케어": [50 + (i * 0.2 * current_factor) for i in range(current_days)],
+        "선케어": [20 + (i * 0.5 * current_factor) for i in range(current_days)],
+        "색조메이크업": [45 - (i * 0.1 * current_factor) for i in range(current_days)]
     })
     st.line_chart(trend_data.set_index("날짜"))
 
@@ -141,12 +152,11 @@ with tab3:
             use_container_width=True
         )
         
-        # [추가 기능 4] 엑셀/CSV 데이터 다운로드 버튼
         st.markdown("---")
         csv_data = rank_df.to_csv(index=False, encoding="utf-8-sig")
         st.download_button(
             label="📥 분석 데이터 CSV 다운로드",
             data=csv_data,
-            file_name="beauty_trend_analysis.csv",
+            file_name=f"beauty_trend_{period_option}.csv",
             mime="text/csv"
         )
