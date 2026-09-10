@@ -13,22 +13,22 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. 커스텀 CSS 스타일링 (화이트 모드 기반 고급 UI/UX)
+# 2. 커스텀 CSS 스타일링 (연한 베이지 & 화이트 UI/UX)
 st.markdown("""
 <style>
     /* 전체 배경 화이트 모드 */
     .stApp {
-        background-color: #f8f9fa;
+        background-color: #fcfbf9;
         color: #212529;
     }
 
-    /* 소재 가이드 전용 카드 스타일 */
+    /* 소재 가이드 전용 카드 스타일 (연한 베이지 톤) */
     .guide-card {
         background-color: #ffffff;
-        border: 1px solid #e9ecef;
+        border: 1px solid #f0ece1;
         border-radius: 12px;
         padding: 20px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.02);
         height: 100%;
     }
     .guide-title {
@@ -39,9 +39,9 @@ st.markdown("""
         align-items: center;
         gap: 6px;
     }
-    .tag-copy { color: #2b4c7e; }
-    .tag-reels { color: #4a7c59; }
-    .tag-target { color: #d9531e; }
+    .tag-copy { color: #526756; }
+    .tag-reels { color: #788a72; }
+    .tag-target { color: #8a7b6b; }
 
     .guide-list {
         font-size: 13px;
@@ -52,10 +52,10 @@ st.markdown("""
         margin-bottom: 6px;
     }
 
-    /* 탭 헤더 디자인 */
+    /* 탭 헤더 디자인 (연한 베이지 톤 포인트) */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
-        border-bottom: 2px solid #e9ecef;
+        border-bottom: 2px solid #f0ece1;
     }
     .stTabs [data-baseweb="tab"] {
         height: 46px;
@@ -63,13 +63,20 @@ st.markdown("""
         border-radius: 8px 8px 0 0;
         padding: 0 16px;
         font-weight: 600;
-        color: #6c757d;
+        color: #7d7d7d;
     }
     .stTabs [aria-selected="true"] {
-        background-color: #ffffff !important;
-        color: #1a1d20 !important;
-        border-bottom: 3px solid #2b4c7e !important;
+        background-color: #f7f4ed !important;
+        color: #3d3b37 !important;
+        border-bottom: 3px solid #b5a895 !important;
         box-shadow: 0 -2px 6px rgba(0,0,0,0.02);
+    }
+    
+    /* 인포 박스 베이지 포인트 */
+    .stAlert {
+        background-color: #f7f4ed;
+        border-left: 4px solid #b5a895;
+        color: #3d3b37;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -165,7 +172,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "📋 상세 데이터 다운로드"
 ])
 
-# --- TAB 1: 단순하고 컴팩트해진 Plotly 차트 ---
+# --- TAB 1: 연한 그린 계열 Plotly 차트 ---
 with tab1:
     st.subheader("💡 카테고리별 핵심 수치")
     m_cols = st.columns(len(rank_df) if not rank_df.empty else 1)
@@ -180,8 +187,8 @@ with tab1:
     st.markdown("---")
     col1, col2 = st.columns(2)
     
-    # 깔끔하고 절제된 모노톤 / 톤다운 세련된 컬러 팔레트
-    simple_colors = ['#2b4c7e', '#4a7c59', '#6c757d', '#8d99ae', '#b8c0c2', '#d9dcd6']
+    # 연한 그린/세이지 계열 컬러 팔레트
+    soft_green_colors = ['#788a72', '#a3b19b', '#c2cbd0', '#d2d8c3', '#8e9a82', '#b5c0ad']
     
     with col1:
         st.subheader("카테고리별 검색 지수")
@@ -191,11 +198,10 @@ with tab1:
                 x="카테고리",
                 y="최근 7일 평균 지수",
                 text="최근 7일 평균 지수",
-                color_discrete_sequence=['#2b4c7e'], # 단순 단색 적용
+                color_discrete_sequence=['#788a72'], # 연한 세이지 그린 단색 적용
                 template="plotly_white"
             )
             fig_bar.update_traces(texttemplate='%{text:.1f}', textposition='outside')
-            # 유형 표기 범례 및 축 레이블 정리, 컴팩트한 높이 설정
             fig_bar.update_layout(
                 showlegend=False,
                 height=290,
@@ -213,12 +219,12 @@ with tab1:
                 names="카테고리",
                 values="최근 7일 평균 지수",
                 hole=0.55,
-                color_discrete_sequence=simple_colors,
+                color_discrete_sequence=soft_green_colors,
                 template="plotly_white"
             )
-            fig_pie.update_traces(textinfo='percent+label', showlegend=False) # 범례 제거
+            fig_pie.update_traces(textinfo='percent+label', showlegend=False)
             fig_pie.update_layout(
-                showlegend=False, # 옆에 주렁주렁 나오는 범례 제거
+                showlegend=False,
                 height=290,
                 margin=dict(l=10, r=10, t=10, b=10)
             )
@@ -243,7 +249,7 @@ with tab1:
         x="날짜",
         y="검색지수",
         color="카테고리",
-        color_discrete_sequence=simple_colors,
+        color_discrete_sequence=soft_green_colors,
         template="plotly_white"
     )
     fig_line.update_layout(
@@ -341,7 +347,7 @@ with tab3:
         hide_index=True
     )
 
-# --- TAB 4: 상세 데이터 분석 및 다운로드 ---
+# --- TAB 4: 상세 데이터 분석 및 다운로드 (cp949 한글 깨짐 방지 적용) ---
 with tab4:
     st.subheader("📋 카테고리 트렌드 원본 데이터")
     st.caption("분석에 활용된 카테고리별 검색 데이터 요약 표입니다.")
@@ -366,7 +372,8 @@ with tab4:
         )
         
         st.markdown("---")
-        csv_data = rank_df.to_csv(index=False, encoding="utf-8-sig")
+        # cp949 인코딩으로 엑셀 한글 깨짐 방지
+        csv_data = rank_df.to_csv(index=False, encoding="cp949")
         st.download_button(
             label="📥 소재 기획용 RAW 데이터 CSV 다운로드",
             data=csv_data,
