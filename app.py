@@ -39,9 +39,9 @@ st.markdown("""
         align-items: center;
         gap: 6px;
     }
-    .tag-copy { color: #d9381e; }
-    .tag-reels { color: #f2b035; }
-    .tag-target { color: #0066cc; }
+    .tag-copy { color: #2b4c7e; }
+    .tag-reels { color: #4a7c59; }
+    .tag-target { color: #d9531e; }
 
     .guide-list {
         font-size: 13px;
@@ -68,7 +68,7 @@ st.markdown("""
     .stTabs [aria-selected="true"] {
         background-color: #ffffff !important;
         color: #1a1d20 !important;
-        border-bottom: 3px solid #ff4b4b !important;
+        border-bottom: 3px solid #2b4c7e !important;
         box-shadow: 0 -2px 6px rgba(0,0,0,0.02);
     }
 </style>
@@ -165,7 +165,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "📋 상세 데이터 다운로드"
 ])
 
-# --- TAB 1: 트렌드 요약 & 예쁜 Plotly 차트 ---
+# --- TAB 1: 단순하고 컴팩트해진 Plotly 차트 ---
 with tab1:
     st.subheader("💡 카테고리별 핵심 수치")
     m_cols = st.columns(len(rank_df) if not rank_df.empty else 1)
@@ -180,41 +180,52 @@ with tab1:
     st.markdown("---")
     col1, col2 = st.columns(2)
     
-    colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#1A535C', '#FF9F1C', '#AC66CC']
+    # 깔끔하고 절제된 모노톤 / 톤다운 세련된 컬러 팔레트
+    simple_colors = ['#2b4c7e', '#4a7c59', '#6c757d', '#8d99ae', '#b8c0c2', '#d9dcd6']
     
     with col1:
-        st.subheader("📊 카테고리별 검색 지수 (바 차트)")
+        st.subheader("카테고리별 검색 지수")
         if not rank_df.empty:
             fig_bar = px.bar(
                 rank_df,
                 x="카테고리",
                 y="최근 7일 평균 지수",
                 text="최근 7일 평균 지수",
-                color="카테고리",
-                color_discrete_sequence=colors,
+                color_discrete_sequence=['#2b4c7e'], # 단순 단색 적용
                 template="plotly_white"
             )
             fig_bar.update_traces(texttemplate='%{text:.1f}', textposition='outside')
-            fig_bar.update_layout(showlegend=False, height=380, margin=dict(l=20, r=20, t=30, b=20))
+            # 유형 표기 범례 및 축 레이블 정리, 컴팩트한 높이 설정
+            fig_bar.update_layout(
+                showlegend=False,
+                height=290,
+                margin=dict(l=10, r=10, t=10, b=10),
+                xaxis_title=None,
+                yaxis_title=None
+            )
             st.plotly_chart(fig_bar, use_container_width=True)
             
     with col2:
-        st.subheader("🍩 검색 점유율 비중 (도넛 차트)")
+        st.subheader("카테고리별 검색 점유율")
         if not rank_df.empty:
             fig_pie = px.pie(
                 rank_df,
                 names="카테고리",
                 values="최근 7일 평균 지수",
-                hole=0.45,
-                color_discrete_sequence=colors,
+                hole=0.55,
+                color_discrete_sequence=simple_colors,
                 template="plotly_white"
             )
-            fig_pie.update_traces(textinfo='percent+label')
-            fig_pie.update_layout(height=380, margin=dict(l=20, r=20, t=30, b=20))
+            fig_pie.update_traces(textinfo='percent+label', showlegend=False) # 범례 제거
+            fig_pie.update_layout(
+                showlegend=False, # 옆에 주렁주렁 나오는 범례 제거
+                height=290,
+                margin=dict(l=10, r=10, t=10, b=10)
+            )
             st.plotly_chart(fig_pie, use_container_width=True)
 
     st.markdown("---")
-    st.subheader("📈 일자별 검색 트렌드 변화 추이")
+    st.subheader("일자별 검색 트렌드 추이")
     dates = pd.date_range(end=pd.Timestamp.now(), periods=current_days)
     
     trend_dict = {"날짜": dates}
@@ -232,13 +243,20 @@ with tab1:
         x="날짜",
         y="검색지수",
         color="카테고리",
-        color_discrete_sequence=colors,
+        color_discrete_sequence=simple_colors,
         template="plotly_white"
     )
-    fig_line.update_layout(height=400, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20))
+    fig_line.update_layout(
+        height=320,
+        hovermode="x unified",
+        margin=dict(l=10, r=10, t=10, b=10),
+        xaxis_title=None,
+        yaxis_title=None,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, title=None)
+    )
     st.plotly_chart(fig_line, use_container_width=True)
 
-# --- TAB 2: AI 소재 카피라이팅 가이드 (디자인 고도화) ---
+# --- TAB 2: AI 소재 카피라이팅 가이드 ---
 with tab2:
     st.subheader("✍️ 급상승 카테고리 맞춤 광고 카피 & 소재 아이디어")
     st.caption("검색 트렌드 데이터를 바탕으로 소재 기획 시 바로 활용할 수 있는 광고 카피와 메세지를 제안합니다.")
@@ -287,7 +305,7 @@ with tab2:
             </div>
             ''', unsafe_allow_html=True)
 
-# --- TAB 3: 급상승 소재 키워드 (표 디자인 개선) ---
+# --- TAB 3: 급상승 소재 키워드 ---
 with tab3:
     st.subheader("🔥 소구점 발굴을 위한 급상승 세부 키워드 Top 5")
     st.caption("브랜드 키워드 외에 마케팅 소재 소구점으로 활용하기 좋은 세부 검색어입니다.")
@@ -323,7 +341,7 @@ with tab3:
         hide_index=True
     )
 
-# --- TAB 4: 상세 데이터 분석 및 다운로드 (표 디자인 개선) ---
+# --- TAB 4: 상세 데이터 분석 및 다운로드 ---
 with tab4:
     st.subheader("📋 카테고리 트렌드 원본 데이터")
     st.caption("분석에 활용된 카테고리별 검색 데이터 요약 표입니다.")
