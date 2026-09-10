@@ -187,7 +187,6 @@ with tab1:
     st.markdown("---")
     col1, col2 = st.columns(2)
     
-    # 연한 그린/세이지 계열 컬러 팔레트
     soft_green_colors = ['#788a72', '#a3b19b', '#c2cbd0', '#d2d8c3', '#8e9a82', '#b5c0ad']
     
     with col1:
@@ -198,7 +197,7 @@ with tab1:
                 x="카테고리",
                 y="최근 7일 평균 지수",
                 text="최근 7일 평균 지수",
-                color_discrete_sequence=['#788a72'], # 연한 세이지 그린 단색 적용
+                color_discrete_sequence=['#788a72'],
                 template="plotly_white"
             )
             fig_bar.update_traces(texttemplate='%{text:.1f}', textposition='outside')
@@ -347,7 +346,7 @@ with tab3:
         hide_index=True
     )
 
-# --- TAB 4: 상세 데이터 분석 및 다운로드 (cp949 한글 깨짐 방지 적용) ---
+# --- TAB 4: 상세 데이터 분석 및 다운로드 (utf-8-sig + bytes 인코딩 적용) ---
 with tab4:
     st.subheader("📋 카테고리 트렌드 원본 데이터")
     st.caption("분석에 활용된 카테고리별 검색 데이터 요약 표입니다.")
@@ -372,11 +371,11 @@ with tab4:
         )
         
         st.markdown("---")
-        # cp949 인코딩으로 엑셀 한글 깨짐 방지
-        csv_data = rank_df.to_csv(index=False, encoding="cp949")
+        # utf-8-sig 인코딩 및 bytes 변환으로 엑셀 한글 깨짐 완벽 방지
+        csv_bytes = rank_df.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
         st.download_button(
             label="📥 소재 기획용 RAW 데이터 CSV 다운로드",
-            data=csv_data,
+            data=csv_bytes,
             file_name=f"beauty_perf_marketing_{period_option}.csv",
             mime="text/csv"
         )
