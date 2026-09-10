@@ -83,9 +83,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. 네이버 API 데이터 레이어 (실제 연동 + 데이터 가공)
+# 2. 네이버 API 데이터 레이어
 # ==========================================
-# 보안: st.secrets 또는 os.getenv 사용 (하드코딩 절대 금지)
 try:
     NAVER_CLIENT_ID = st.secrets["NAVER_CLIENT_ID"]
     NAVER_CLIENT_SECRET = st.secrets["NAVER_CLIENT_SECRET"]
@@ -106,19 +105,7 @@ AGE_MAP = {
     "60세 이상": "11"
 }
 
-CATEGORY_PARAM_MAP = {
-    "스킨케어": "50000001",
-    "색조메이크업": "50000002",
-    "선케어": "50000001", # 스킨케어 하위 예시
-    "베이스메이크업": "50000002",
-    "클렌징": "50000001",
-    "마스크/팩": "50000001"
-}
-
 def fetch_naver_datalab_trend(start_date, end_date, time_unit, keyword_groups, age_code=None):
-    """
-    네이버 데이터랩 API 실시간 호출 함수
-    """
     url = "https://openapi.naver.com/v1/datalab/search"
     headers = {
         "X-Naver-Client-Id": NAVER_CLIENT_ID,
@@ -141,17 +128,13 @@ def fetch_naver_datalab_trend(start_date, end_date, time_unit, keyword_groups, a
             return res.json(), True
         else:
             return None, False
-    except Exception as e:
+    except Exception:
         return None, False
 
 def generate_mock_data(start_date, end_date, selected_categories, age_group, custom_keyword):
-    """
-    API 연결이 없을 때 사용하는 시뮬레이션 데이터 생성 레이어
-    """
     dates = pd.date_range(start=start_date, end=end_date, freq="D")
     current_days = len(dates)
     
-    # 연령대별 가중치 차등 부여
     age_weights = {
         "전체": 1.0,
         "10대 (13~18세)": 0.85,
@@ -182,7 +165,6 @@ def generate_mock_data(start_date, end_date, selected_categories, age_group, cus
     if custom_keyword.strip():
         base_ratios[f"🔍 {custom_keyword.strip()}"] = 72.3
 
-    # 일자별 트렌드 데이터 생성
     trend_dict = {"date": dates}
     summary_list = []
     
@@ -193,7 +175,6 @@ def generate_mock_data(start_date, end_date, selected_categories, age_group, cus
         trend_vals = np.clip(b_ratio + np.linspace(-8, 12, current_days) + noise, 5.0, 100.0)
         trend_dict[cat] = trend_vals
         
-        # 최근 7일 평균 및 변동률 계산
         recent_7_avg = float(np.mean(trend_vals[-7:]))
         prev_7_avg = float(np.mean(trend_vals[-14:-7])) if current_days >= 14 else recent_7_avg
         prev_30_avg = float(np.mean(trend_vals[-30:])) if current_days >= 30 else recent_7_avg
@@ -256,13 +237,12 @@ st.sidebar.subheader("🔍 키워드 직접 입력")
 custom_keyword = st.sidebar.text_input("추가 분석 키워드", "")
 
 # ==========================================
-# 4. 데이터 로딩 & API/MOCK 구별
+# 4. 데이터 로딩
 # ==========================================
 is_real_api = False
 api_response = None
 
 if NAVER_CLIENT_ID and NAVER_CLIENT_SECRET and selected_categories:
-    # 네이버 API 호출 시도
     keyword_groups = []
     for cat in selected_categories[:5]:
         keyword_groups.append({
@@ -284,7 +264,6 @@ if NAVER_CLIENT_ID and NAVER_CLIENT_SECRET and selected_categories:
         is_real_api = True
 
 if is_real_api and api_response:
-    # 실제 API 데이터 구조 정제
     results = api_response.get("results", [])
     trend_dict = {}
     summary_list = []
@@ -317,7 +296,6 @@ if is_real_api and api_response:
     trend_df = pd.DataFrame(trend_dict)
     summary_df = pd.DataFrame(summary_list)
 else:
-    # DEMO/MOCK 데이터
     trend_df, summary_df = generate_mock_data(
         start_date_dt,
         end_date_dt,
@@ -332,7 +310,6 @@ else:
 st.title("🎯 뷰티 트렌드 종합 대시보드")
 st.caption(f"네이버 검색 트렌드 기반 연령대별 검색 관심도 분석 대시보드 ({period_option} 기준)")
 
-# 데이터 출처 및 가이드 안내
 col_status1, col_status2 = st.columns([3, 1])
 with col_status1:
     if is_real_api:
@@ -343,7 +320,7 @@ with col_status2:
     st.caption("※ 검색 관심도는 절대 검색량이 아닌, 최고 검색 시점을 100으로 설정한 **상대 검색지수**입니다.")
 
 # ==========================================
-# 6. [WHAT/WHO/WHEN] 핵심 KPI 영역
+# 6. 핵심 KPI 영역
 # ==========================================
 st.markdown("---")
 st.subheader("💡 카테고리별 최근 검색 관심도 요약")
@@ -359,7 +336,7 @@ if not summary_df.empty:
             )
 
 # ==========================================
-# 7. 소비자 트렌드 인사이트 자동 추출
+# 7. 트렌드 인사이트 영역
 # ==========================================
 st.markdown("---")
 st.subheader("💡 검색 데이터 기반 트렌드 인사이트")
@@ -376,7 +353,7 @@ if not summary_df.empty:
     st.info(insight_msg)
 
 # ==========================================
-# 8. 차트 시각화 [WHAT / WHO / WHEN]
+# 8. 차트 시각화
 # ==========================================
 st.markdown("---")
 tab1, tab2, tab3, tab4 = st.tabs([
@@ -388,7 +365,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
 
 soft_green_colors = ['#788a72', '#a3b19b', '#c2cbd0', '#d2d8c3', '#8e9a82', '#b5c0ad']
 
-# --- TAB 1: 카테고리별 관심도 (점유율 표현 완전 제거 -> 막대 그래프로 변경) ---
+# --- TAB 1: 카테고리별 관심도 ---
 with tab1:
     col_c1, col_c2 = st.columns(2)
     
@@ -433,7 +410,7 @@ with tab1:
             )
             st.plotly_chart(fig_bar_h, use_container_width=True)
 
-# --- TAB 2: 일자별 검색 관심도 추이 [WHEN] ---
+# --- TAB 2: 일자별 검색 관심도 추이 ---
 with tab2:
     st.subheader("일자별 검색 관심도 추이")
     st.caption("선택한 조회 기간 동안의 일자별 상대 검색지수 흐름입니다.")
@@ -510,7 +487,6 @@ with tab4:
         )
         
         st.markdown("---")
-        # 엑셀 한글 깨짐 방지 처리 (utf-8-sig 바이트 인코딩)
         csv_bytes = summary_df.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
         st.download_button(
             label="📥 RAW 데이터 CSV 다운로드",
