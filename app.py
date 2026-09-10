@@ -8,12 +8,12 @@ import plotly.graph_objects as go
 
 # 1. 페이지 기본 설정
 st.set_page_config(
-    page_title="뷰티 퍼포먼스 마케팅 소재 기획 대시보드",
+    page_title="뷰티 트렌드 종합 대시보드",
     page_icon="💄",
     layout="wide"
 )
 
-# 2. 커스텀 CSS 스타일링 (연한 베이지 & 화이트 UI/UX)
+# 2. 커스텀 CSS 스타일링 (멀티셀렉트 태그 그레이 톤 변경 및 화이트/그레이 UI)
 st.markdown("""
 <style>
     /* 전체 배경 화이트 모드 */
@@ -22,10 +22,17 @@ st.markdown("""
         color: #212529;
     }
 
-    /* 소재 가이드 전용 카드 스타일 (연한 베이지 톤) */
+    /* 사이드바 multiselect 빨간 태그 -> 모던 그레이 태그로 변경 */
+    span[data-baseweb="tag"] {
+        background-color: #4a4d52 !important;
+        color: #ffffff !important;
+        border-radius: 6px !important;
+    }
+
+    /* 소재 가이드 전용 카드 스타일 (연한 그레이/베이지 톤) */
     .guide-card {
         background-color: #ffffff;
-        border: 1px solid #f0ece1;
+        border: 1px solid #e9ecef;
         border-radius: 12px;
         padding: 20px;
         box-shadow: 0 2px 6px rgba(0,0,0,0.02);
@@ -52,10 +59,10 @@ st.markdown("""
         margin-bottom: 6px;
     }
 
-    /* 탭 헤더 디자인 (연한 베이지 톤 포인트) */
+    /* 탭 헤더 디자인 */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
-        border-bottom: 2px solid #f0ece1;
+        border-bottom: 2px solid #e9ecef;
     }
     .stTabs [data-baseweb="tab"] {
         height: 46px;
@@ -66,17 +73,17 @@ st.markdown("""
         color: #7d7d7d;
     }
     .stTabs [aria-selected="true"] {
-        background-color: #f7f4ed !important;
-        color: #3d3b37 !important;
-        border-bottom: 3px solid #b5a895 !important;
+        background-color: #f1f3f5 !important;
+        color: #212529 !important;
+        border-bottom: 3px solid #4a4d52 !important;
         box-shadow: 0 -2px 6px rgba(0,0,0,0.02);
     }
     
-    /* 인포 박스 베이지 포인트 */
+    /* 인포 박스 포인트 */
     .stAlert {
-        background-color: #f7f4ed;
-        border-left: 4px solid #b5a895;
-        color: #3d3b37;
+        background-color: #f8f9fa;
+        border-left: 4px solid #6c757d;
+        color: #212529;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -90,7 +97,7 @@ except Exception:
     NAVER_CLIENT_SECRET = os.getenv("NAVER_CLIENT_SECRET", "")
 
 # 4. 사이드바 설정
-st.sidebar.title("💄 소재 기획 대시보드")
+st.sidebar.title("💄 트렌드 대시보드 설정")
 
 if NAVER_CLIENT_ID and NAVER_CLIENT_SECRET:
     st.sidebar.success("네이버 실시간 API 연동 완료")
@@ -149,9 +156,9 @@ if custom_keyword.strip():
     })
     rank_df = pd.concat([new_row, rank_df], ignore_index=True)
 
-# 6. 메인 헤더
-st.title("🎯 뷰티 퍼포먼스 마케팅 소재 기획 대시보드")
-st.caption(f"네이버 검색 트렌드 기반 소재 카피라이팅 & 급상승 키워드 발굴 ({period_option} 기준)")
+# 6. 메인 헤더 (요청하신 새로운 타이틀로 변경)
+st.title("🎯 뷰티 트렌드 종합 대시보드")
+st.caption(f"네이버 검색 트렌드 기반 실시간 카테고리 분석 및 검색 트렌드 리포트 ({period_option} 기준)")
 
 # 소재 기획 자동 요약
 if not rank_df.empty:
@@ -159,9 +166,9 @@ if not rank_df.empty:
     top_growth = rank_df.sort_values(by="WoW 변동률(%)", ascending=False).iloc[0]
     
     st.info(
-        f"🚀 **금주 광고 소재 기획 포인트**: "
+        f"🚀 **금주 트렌드 하이라이트**: "
         f"현재 검색 점유율 1위는 **[{top_cat['카테고리']}]** ({top_cat['최근 7일 평균 지수']} pt)이며, "
-        f"전주 대비 가장 빠르게 수요가 급상승 중인 소재 키워드는 **[{top_growth['카테고리']}]** (+{top_growth['WoW 변동률(%)']}%) 입니다."
+        f"전주 대비 가장 빠르게 수요가 급상승 중인 키워드는 **[{top_growth['카테고리']}]** (+{top_growth['WoW 변동률(%)']}%) 입니다."
     )
 
 # 7. 탭 구성
@@ -172,7 +179,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "📋 상세 데이터 다운로드"
 ])
 
-# --- TAB 1: 연한 그린 계열 Plotly 차트 ---
+# --- TAB 1: 연한 그린/세이지 계열 Plotly 차트 ---
 with tab1:
     st.subheader("💡 카테고리별 핵심 수치")
     m_cols = st.columns(len(rank_df) if not rank_df.empty else 1)
@@ -346,7 +353,7 @@ with tab3:
         hide_index=True
     )
 
-# --- TAB 4: 상세 데이터 분석 및 다운로드 (utf-8-sig + bytes 인코딩 적용) ---
+# --- TAB 4: 상세 데이터 분석 및 다운로드 ---
 with tab4:
     st.subheader("📋 카테고리 트렌드 원본 데이터")
     st.caption("분석에 활용된 카테고리별 검색 데이터 요약 표입니다.")
@@ -371,11 +378,11 @@ with tab4:
         )
         
         st.markdown("---")
-        # utf-8-sig 인코딩 및 bytes 변환으로 엑셀 한글 깨짐 완벽 방지
+        # utf-8-sig + bytes 변환으로 엑셀 한글 깨짐 방지
         csv_bytes = rank_df.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
         st.download_button(
-            label="📥 소재 기획용 RAW 데이터 CSV 다운로드",
+            label="📥 RAW 데이터 CSV 다운로드",
             data=csv_bytes,
-            file_name=f"beauty_perf_marketing_{period_option}.csv",
+            file_name=f"beauty_trend_{period_option}.csv",
             mime="text/csv"
         )
