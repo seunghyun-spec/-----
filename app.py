@@ -47,7 +47,7 @@ st.markdown("""
         border-radius: 8px 8px 0 0;
         padding: 0 18px;
         font-weight: 700;
-        font-size: 16px !important; /* 글씨 크기 키움 */
+        font-size: 16px !important;
         color: #555555;
     }
     .stTabs [aria-selected="true"] {
@@ -321,7 +321,7 @@ if not summary_df.empty:
     st.info(insight_msg)
 
 # ==========================================
-# 8. 차트 시각화 (#044E8D 단일 컬러 통일)
+# 8. 차트 시각화 (#044E8D 투명도 높임 적용)
 # ==========================================
 st.markdown("---")
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
@@ -333,8 +333,9 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📋 Raw 데이터 다운로드"
 ])
 
-# #044E8D 단일 컬러 적용
-MAIN_COLOR = "#044E8D"
+# #044E8D 기반 투명한 RGBA 색상 (투명도 Alpha: 0.45)
+TRANSPARENT_BLUE = "rgba(4, 78, 141, 0.45)"
+BORDER_BLUE = "#044E8D"
 
 # --- TAB 1: 카테고리별 관심도 ---
 with tab1:
@@ -347,13 +348,15 @@ with tab1:
                 x="카테고리",
                 y="최근 7일 상대 검색지수",
                 text="최근 7일 상대 검색지수",
-                color_discrete_sequence=[MAIN_COLOR], # #044E8D 단일 컬러 통일
+                color_discrete_sequence=[TRANSPARENT_BLUE], # 은은하게 투명한 색상 적용
                 template="plotly_white"
             )
             fig_bar.update_traces(
                 texttemplate='%{text:.1f}',
                 textposition='outside',
-                width=0.35
+                width=0.35,
+                marker_line_color=BORDER_BLUE, # 윤곽선은 진하게 강조
+                marker_line_width=1.5
             )
             fig_bar.update_layout(
                 showlegend=False,
@@ -374,13 +377,15 @@ with tab1:
                 x="WoW 관심도 변화율(%)",
                 text="WoW 관심도 변화율(%)",
                 orientation='h',
-                color_discrete_sequence=[MAIN_COLOR], # #044E8D 단일 컬러 통일
+                color_discrete_sequence=[TRANSPARENT_BLUE], # 은은하게 투명한 색상 적용
                 template="plotly_white"
             )
             fig_bar_h.update_traces(
                 texttemplate='%{text:+.1f}%',
                 textposition='outside',
-                width=0.35
+                width=0.35,
+                marker_line_color=BORDER_BLUE,
+                marker_line_width=1.5
             )
             fig_bar_h.update_layout(
                 showlegend=False,
@@ -400,8 +405,15 @@ with tab2:
     if not trend_df.empty:
         trend_melted = trend_df.melt(id_vars=["date"], var_name="카테고리/키워드", value_name="상대 검색지수")
         
-        # 라인 차트에 명암 차이를 둔 세련된 블루 톤 적용
-        blue_shades = ['#044E8D', '#2B6CB0', '#4299E1', '#63B3ED', '#90CDF4', '#BEE3F8']
+        # 선 그래프 명암 투명도 조절 팔레트
+        blue_shades = [
+            "rgba(4, 78, 141, 0.95)",
+            "rgba(4, 78, 141, 0.75)",
+            "rgba(4, 78, 141, 0.60)",
+            "rgba(4, 78, 141, 0.45)",
+            "rgba(4, 78, 141, 0.30)",
+            "rgba(4, 78, 141, 0.20)"
+        ]
         
         fig_line = px.line(
             trend_melted,
