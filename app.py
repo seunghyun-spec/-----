@@ -23,7 +23,7 @@ st.markdown("""
         color: #212529;
     }
     span[data-baseweb="tag"] {
-        background-color: #00897B !important;
+        background-color: #044E8D !important;
         color: #ffffff !important;
         border-radius: 6px !important;
     }
@@ -35,28 +35,31 @@ st.markdown("""
         box-shadow: 0 2px 6px rgba(0,0,0,0.02);
         height: 100%;
     }
+    
+    /* 탭 메뉴 글씨체 크기 확대 및 스타일 정의 */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
         border-bottom: 2px solid #e9ecef;
     }
     .stTabs [data-baseweb="tab"] {
-        height: 46px;
+        height: 50px;
         background-color: transparent;
         border-radius: 8px 8px 0 0;
-        padding: 0 16px;
-        font-weight: 600;
-        color: #7d7d7d;
+        padding: 0 18px;
+        font-weight: 700;
+        font-size: 16px !important; /* 글씨 크기 키움 */
+        color: #555555;
     }
     .stTabs [aria-selected="true"] {
-        background-color: #e0f2f1 !important;
-        color: #004d40 !important;
-        border-bottom: 3px solid #00897B !important;
+        background-color: #e8f0f8 !important;
+        color: #044E8D !important;
+        border-bottom: 3px solid #044E8D !important;
         box-shadow: 0 -2px 6px rgba(0,0,0,0.02);
     }
     .stAlert {
-        background-color: #e0f2f1;
-        border-left: 4px solid #00897B;
-        color: #004d40;
+        background-color: #e8f0f8;
+        border-left: 4px solid #044E8D;
+        color: #044E8D;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -161,7 +164,7 @@ def generate_mock_data(start_date, end_date, selected_categories, age_group, cus
     return trend_df, summary_df
 
 # ==========================================
-# 3. 사이드바 UI (카테고리 항목 추가)
+# 3. 사이드바 UI
 # ==========================================
 st.sidebar.title("💄 대시보드 필터")
 
@@ -190,7 +193,6 @@ selected_age = st.sidebar.selectbox(
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("🏷️ 카테고리 필터")
-# 항목 확장: 클렌징, 마스크/팩 기본 포함
 default_categories = ["스킨케어", "선케어", "색조메이크업", "베이스메이크업", "클렌징", "마스크/팩"]
 selected_categories = st.sidebar.multiselect(
     "비교 카테고리",
@@ -319,7 +321,7 @@ if not summary_df.empty:
     st.info(insight_msg)
 
 # ==========================================
-# 8. 차트 시각화 (막대 얇게 + 쨍한 색상 팔레트)
+# 8. 차트 시각화 (#044E8D 단일 컬러 통일)
 # ==========================================
 st.markdown("---")
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
@@ -331,8 +333,8 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📋 Raw 데이터 다운로드"
 ])
 
-# 쨍하고 세련된 비비드 틸 & 그린 컬러 팔레트
-vivid_colors = ['#00A86B', '#00C9A7', '#00E676', '#1DE9B6', '#00BFA5', '#64DD17', '#AEEA00']
+# #044E8D 단일 컬러 적용
+MAIN_COLOR = "#044E8D"
 
 # --- TAB 1: 카테고리별 관심도 ---
 with tab1:
@@ -345,18 +347,17 @@ with tab1:
                 x="카테고리",
                 y="최근 7일 상대 검색지수",
                 text="최근 7일 상대 검색지수",
-                color="카테고리",
-                color_discrete_sequence=vivid_colors,
+                color_discrete_sequence=[MAIN_COLOR], # #044E8D 단일 컬러 통일
                 template="plotly_white"
             )
             fig_bar.update_traces(
                 texttemplate='%{text:.1f}',
                 textposition='outside',
-                width=0.35 # 막대 굵기 얇게 조절
+                width=0.35
             )
             fig_bar.update_layout(
                 showlegend=False,
-                bargap=0.4, # 여백 넓혀 슬림하게 변경
+                bargap=0.4,
                 height=320,
                 margin=dict(l=10, r=10, t=10, b=10),
                 xaxis_title=None,
@@ -373,14 +374,13 @@ with tab1:
                 x="WoW 관심도 변화율(%)",
                 text="WoW 관심도 변화율(%)",
                 orientation='h',
-                color="카테고리",
-                color_discrete_sequence=vivid_colors,
+                color_discrete_sequence=[MAIN_COLOR], # #044E8D 단일 컬러 통일
                 template="plotly_white"
             )
             fig_bar_h.update_traces(
                 texttemplate='%{text:+.1f}%',
                 textposition='outside',
-                width=0.35 # 가로 막대 굵기 얇게 조절
+                width=0.35
             )
             fig_bar_h.update_layout(
                 showlegend=False,
@@ -399,12 +399,16 @@ with tab2:
     
     if not trend_df.empty:
         trend_melted = trend_df.melt(id_vars=["date"], var_name="카테고리/키워드", value_name="상대 검색지수")
+        
+        # 라인 차트에 명암 차이를 둔 세련된 블루 톤 적용
+        blue_shades = ['#044E8D', '#2B6CB0', '#4299E1', '#63B3ED', '#90CDF4', '#BEE3F8']
+        
         fig_line = px.line(
             trend_melted,
             x="date",
             y="상대 검색지수",
             color="카테고리/키워드",
-            color_discrete_sequence=vivid_colors,
+            color_discrete_sequence=blue_shades,
             template="plotly_white"
         )
         fig_line.update_layout(
