@@ -8,7 +8,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # ==========================================
-# 1. 페이지 기본 설정 & CSS (2번 사진 대시보드 테마 & 1번 사진 박스 반영)
+# 1. 페이지 기본 설정 & CSS (텍스트박스 카드 통합 디자인)
 # ==========================================
 st.set_page_config(
     page_title="뷰티 트렌드 종합 대시보드",
@@ -18,43 +18,46 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    /* 2번 사진 참고: 라이트 모드 소프트 블루/그레이 배경 */
+    /* 전체 배경: 라이트 모드 소프트 블루/그레이 */
     .stApp {
         background-color: #f4f6f9;
         color: #1e293b;
     }
 
-    /* 1번 사진 참고: 커스텀 안내 텍스트 박스 (왼쪽 그린 포인트 라인 + 화이트 카드) */
-    .summary-box {
+    /* 1번 사진 스타일: 공통 텍스트박스 카드 (왼쪽 그린 라인 + 화이트 박스) */
+    .summary-card {
         background-color: #ffffff;
         border: 1px solid #e2e8f0;
-        border-left: 5px solid #10b981; /* 1번 사진 왼쪽 그린 라인 */
+        border-left: 5px solid #10b981; /* 1번 사진 그린 포인트 라인 */
         border-radius: 12px;
-        padding: 18px 22px;
+        padding: 20px 24px;
         margin-bottom: 20px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
     }
     .summary-title {
-        font-size: 13px;
+        font-size: 15px;
         font-weight: 700;
         color: #10b981;
-        margin-bottom: 6px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
     .summary-content {
         font-size: 14px;
         color: #334155;
-        line-height: 1.6;
+        line-height: 1.7;
     }
 
-    /* 2번 사진 참고: 멀티셀렉트 카테고리 태그 모던 뱃지 */
+    /* 멀티셀렉트 카테고리 태그 모던 뱃지 */
     span[data-baseweb="tag"] {
-        background-color: #6366f1 !important; /* 2번 사진 포인트 퍼플/블루 */
+        background-color: #6366f1 !important;
         color: #ffffff !important;
         border-radius: 6px !important;
         font-weight: 600 !important;
     }
 
-    /* Streamlit alert 박스 대체 디자인 */
+    /* Streamlit alert 박스 커스텀 */
     .stAlert {
         background-color: #ffffff !important;
         border: 1px solid #e2e8f0 !important;
@@ -64,7 +67,7 @@ st.markdown("""
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03) !important;
     }
 
-    /* 2번 사진 참고: 탭 메뉴 스타일링 */
+    /* 탭 메뉴 디자인 */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
         border-bottom: 2px solid #e2e8f0;
@@ -89,7 +92,7 @@ st.markdown("""
         font-weight: 700 !important;
     }
     
-    /* 카드 컨테이너 흰색 래핑 */
+    /* KPI 카드 흰색 배경 */
     div[data-testid="stMetric"] {
         background-color: #ffffff;
         border: 1px solid #e2e8f0;
@@ -314,18 +317,21 @@ else:
 st.title("🎯 뷰티 트렌드 종합 대시보드")
 st.caption(f"네이버 검색 트렌드 기반 연령대별 검색 관심도 분석 대시보드 ({period_option} 기준)")
 
-# 1번 사진 디자인 적용: 상단 상태 박스 커스텀
+# 1번 사진 텍스트박스 카드 디자인: 시스템 연동 상태
 if is_real_api:
-    status_text = f"🟢 **실시간 네이버 API 데이터 연동 중** (최종 동기화: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')})"
+    status_text = f"🟢 <b>실시간 네이버 API 데이터 연동 중</b> (최종 동기화: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')})"
     border_color = "#10b981"
 else:
-    status_text = "🟡 **DEMO (시뮬레이션) 데이터** - 네이버 API 키를 연동하면 실시간 데이터로 자동 전환됩니다."
+    status_text = "🟡 <b>DEMO (시뮬레이션) 데이터</b> - 네이버 API 키를 연동하면 실시간 데이터로 자동 전환됩니다."
     border_color = "#f59e0b"
 
 st.markdown(f'''
-<div class="summary-box" style="border-left-color: {border_color};">
-    <div class="summary-title" style="color: {border_color};">시스템 연동 상태</div>
-    <div class="summary-content">{status_text} <br><span style="font-size: 12px; color: #64748b;">※ 검색 관심도는 절대 검색량이 아닌, 최고 검색 시점을 100으로 설정한 상대 검색지수입니다.</span></div>
+<div class="summary-card" style="border-left-color: {border_color};">
+    <div class="summary-title" style="color: {border_color};">시스템 연동 상태 요약</div>
+    <div class="summary-content">
+        {status_text}<br>
+        <span style="font-size: 12px; color: #64748b;">※ 검색 관심도는 절대 검색량이 아닌, 최고 검색 시점을 100으로 설정한 상대 검색지수입니다.</span>
+    </div>
 </div>
 ''', unsafe_allow_html=True)
 
@@ -346,7 +352,7 @@ if not summary_df.empty:
             )
 
 # ==========================================
-# 7. 트렌드 인사이트 영역 (1번 사진 디자인 적용)
+# 7. 트렌드 인사이트 영역 (1번 사진 텍스트박스 카드)
 # ==========================================
 st.markdown("---")
 st.subheader("💡 검색 데이터 기반 트렌드 인사이트")
@@ -355,10 +361,9 @@ if not summary_df.empty:
     top_interest = summary_df.sort_values(by="최근 7일 상대 검색지수", ascending=False).iloc[0]
     top_growth = summary_df.sort_values(by="WoW 관심도 변화율(%)", ascending=False).iloc[0]
     
-    # 1번 사진 스타일의 깔끔한 인사이트 요약 박스
     st.markdown(f'''
-    <div class="summary-box">
-        <div class="summary-title">트렌드 종합 요약 인사이트</div>
+    <div class="summary-card">
+        <div class="summary-title">트렌드 인사이트 요약</div>
         <div class="summary-content">
             • <b>[WHO & WHAT]</b> <b>{selected_age}</b> 연령층에서 가장 높은 검색 관심도를 보이는 카테고리는 <b>[{top_interest['카테고리']}]</b> (상대 검색지수 <b>{top_interest['최근 7일 상대 검색지수']}</b>) 입니다.<br>
             • <b>[WHEN & TREND]</b> 최근 전주 대비 검색 관심도가 가장 빠르게 상승한 키워드는 <b>[{top_growth['카테고리']}]</b> (<b>+{top_growth['WoW 관심도 변화율(%)']}% WoW</b>) 입니다.<br>
@@ -368,7 +373,7 @@ if not summary_df.empty:
     ''', unsafe_allow_html=True)
 
 # ==========================================
-# 8. 차트 시각화 (2번 사진 퍼플/블루 톤앤매너 적용)
+# 8. 차트 시각화 & 텍스트박스 카드 결합
 # ==========================================
 st.markdown("---")
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
@@ -380,7 +385,6 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📋 Raw 데이터 다운로드"
 ])
 
-# 2번 사진 참고: 모던 퍼플/블루 톤 차트 테마
 PURPLE_PRIMARY = "#6366f1"
 PURPLE_LIGHT = "rgba(99, 102, 241, 0.45)"
 
@@ -446,15 +450,13 @@ with tab1:
             )
             st.plotly_chart(fig_bar_h, use_container_width=True)
 
-# --- TAB 2: 일자별 검색 관심도 추이 (2번 사진 소프트 라인 차트 스타일) ---
+# --- TAB 2: 일자별 검색 관심도 추이 ---
 with tab2:
     st.subheader("일자별 검색 관심도 추이")
     st.caption("선택한 조회 기간 동안의 일자별 상대 검색지수 흐름입니다.")
     
     if not trend_df.empty:
         trend_melted = trend_df.melt(id_vars=["date"], var_name="카테고리/키워드", value_name="상대 검색지수")
-        
-        # 2번 사진 참고: 선명한 멀티 컬러 쉐이드
         line_colors = ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6']
         
         fig_line = px.line(
@@ -478,10 +480,18 @@ with tab2:
         )
         st.plotly_chart(fig_line, use_container_width=True)
 
-# --- TAB 3: 인기 브랜드 랭킹 ---
+# --- TAB 3: 인기 브랜드 랭킹 (텍스트박스 카드화) ---
 with tab3:
     st.subheader(f"🏆 {selected_age} 타겟 관심 브랜드 Top 5")
-    st.caption("검색 트렌드 지수 및 쇼핑 인텐트 기반으로 집계된 주요 뷰티 브랜드 랭킹입니다.")
+    
+    st.markdown(f'''
+    <div class="summary-card">
+        <div class="summary-title">브랜드 랭킹 집계 가이드</div>
+        <div class="summary-content">
+            네이버 검색 트렌드 지수 및 쇼핑 인텐트 데이터에 기초하여 <b>{selected_age}</b> 타겟층에서 최근 주목도가 가장 높은 뷰티 브랜드 5선입니다.
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
     
     brand_df = pd.DataFrame({
         "순위": [1, 2, 3, 4, 5],
@@ -506,10 +516,18 @@ with tab3:
         hide_index=True
     )
 
-# --- TAB 4: 뷰티 인플루언서 모니터링 ---
+# --- TAB 4: 뷰티 인플루언서 모니터링 (텍스트박스 카드화) ---
 with tab4:
     st.subheader("✨ 영향력 뷰티 인플루언서 및 주요 소구 채널")
-    st.caption("네이버 블로그, 포털 기사, 주요 뷰티 채널 내 언급량이 많은 뷰티 크리에이터 및 연관 키워드 분석입니다.")
+    
+    st.markdown('''
+    <div class="summary-card">
+        <div class="summary-title">인플루언서 소구 분석 가이드</div>
+        <div class="summary-content">
+            네이버 블로그, 포털 기사, 주요 뷰티 채널 내 언급량과 포스팅 수가 많으며 소비자 반응에 큰 영향을 주는 크리에이터 및 핵심 소구 키워드 요약입니다.
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
     
     influencer_df = pd.DataFrame({
         "인플루언서 / 채널명": ["뷰스타 뷰티로그", "디렉터파이", "뷰티크리에이터 민스코", "피부과전문의 TV", "포니 뷰티랩"],
@@ -532,10 +550,18 @@ with tab4:
         hide_index=True
     )
 
-# --- TAB 5: 연령대별 급상승 키워드 ---
+# --- TAB 5: 연령대별 급상승 키워드 (텍스트박스 카드화) ---
 with tab5:
     st.subheader(f"🔥 {selected_age} 타겟 급상승 뷰티 키워드 Top 5")
-    st.caption("선택된 연령층에서 최근 4주간 검색 관심도가 가장 가파르게 상승한 세부 키워드 리스트입니다.")
+    
+    st.markdown(f'''
+    <div class="summary-card">
+        <div class="summary-title">급상승 키워드 발굴 요약</div>
+        <div class="summary-content">
+            선택된 <b>{selected_age}</b> 연령층에서 최근 4주간 검색 관심도가 가장 가파르게 상승한 세부 키워드 리스트입니다. 마케팅 소재 소구점으로 적극 활용을 권장합니다.
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
     
     rising_keywords = pd.DataFrame({
         "연령대": [selected_age] * 5,
@@ -558,10 +584,18 @@ with tab5:
         hide_index=True
     )
 
-# --- TAB 6: Raw 데이터 및 다운로드 ---
+# --- TAB 6: Raw 데이터 및 다운로드 (텍스트박스 카드화) ---
 with tab6:
     st.subheader("📋 검색 관심도 분석 원본 데이터")
-    st.caption("대시보드에 연동된 카테고리별 검색 관심도 통계 표입니다.")
+    
+    st.markdown('''
+    <div class="summary-card">
+        <div class="summary-title">RAW 데이터 다운로드 안내</div>
+        <div class="summary-content">
+            분석 및 소재 기획에 활용된 카테고리별 검색 데이터 원본 표입니다. 하단 버튼을 클릭하면 엑셀 한글 깨짐이 없는 CSV 파일로 다운로드 가능합니다.
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
     
     if not summary_df.empty:
         st.dataframe(
