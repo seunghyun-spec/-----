@@ -22,8 +22,9 @@ st.markdown("""
         background-color: #fcfbf9;
         color: #212529;
     }
+    /* 사진속 코랄 레드 동일 컬러 적용 */
     span[data-baseweb="tag"] {
-        background-color: #044E8D !important;
+        background-color: #FF4D4D !important;
         color: #ffffff !important;
         border-radius: 6px !important;
     }
@@ -56,10 +57,12 @@ st.markdown("""
         border-bottom: 3px solid #044E8D !important;
         box-shadow: 0 -2px 6px rgba(0,0,0,0.02);
     }
+    
+    /* 두번째 사진 박스 맨 왼쪽 파란색 선 -> 초록색(#2E7D32)으로 변경 */
     .stAlert {
-        background-color: #e8f0f8;
-        border-left: 4px solid #044E8D;
-        color: #044E8D;
+        background-color: #f1f8e9;
+        border-left: 4px solid #2E7D32 !important;
+        color: #1b5e20;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -321,7 +324,7 @@ if not summary_df.empty:
     st.info(insight_msg)
 
 # ==========================================
-# 8. 차트 시각화 (#044E8D 투명도 높임 적용)
+# 8. 차트 시각화 (테두리 완전히 제거)
 # ==========================================
 st.markdown("---")
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
@@ -333,9 +336,7 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📋 Raw 데이터 다운로드"
 ])
 
-# #044E8D 기반 투명한 RGBA 색상 (투명도 Alpha: 0.45)
 TRANSPARENT_BLUE = "rgba(4, 78, 141, 0.45)"
-BORDER_BLUE = "#044E8D"
 
 # --- TAB 1: 카테고리별 관심도 ---
 with tab1:
@@ -348,15 +349,14 @@ with tab1:
                 x="카테고리",
                 y="최근 7일 상대 검색지수",
                 text="최근 7일 상대 검색지수",
-                color_discrete_sequence=[TRANSPARENT_BLUE], # 은은하게 투명한 색상 적용
+                color_discrete_sequence=[TRANSPARENT_BLUE],
                 template="plotly_white"
             )
             fig_bar.update_traces(
                 texttemplate='%{text:.1f}',
                 textposition='outside',
                 width=0.35,
-                marker_line_color=BORDER_BLUE, # 윤곽선은 진하게 강조
-                marker_line_width=1.5
+                marker_line_width=0 # 테두리 완전히 제거
             )
             fig_bar.update_layout(
                 showlegend=False,
@@ -377,15 +377,14 @@ with tab1:
                 x="WoW 관심도 변화율(%)",
                 text="WoW 관심도 변화율(%)",
                 orientation='h',
-                color_discrete_sequence=[TRANSPARENT_BLUE], # 은은하게 투명한 색상 적용
+                color_discrete_sequence=[TRANSPARENT_BLUE],
                 template="plotly_white"
             )
             fig_bar_h.update_traces(
                 texttemplate='%{text:+.1f}%',
                 textposition='outside',
                 width=0.35,
-                marker_line_color=BORDER_BLUE,
-                marker_line_width=1.5
+                marker_line_width=0 # 테두리 완전히 제거
             )
             fig_bar_h.update_layout(
                 showlegend=False,
@@ -405,7 +404,6 @@ with tab2:
     if not trend_df.empty:
         trend_melted = trend_df.melt(id_vars=["date"], var_name="카테고리/키워드", value_name="상대 검색지수")
         
-        # 선 그래프 명암 투명도 조절 팔레트
         blue_shades = [
             "rgba(4, 78, 141, 0.95)",
             "rgba(4, 78, 141, 0.75)",
