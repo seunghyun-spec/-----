@@ -8,7 +8,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # ==========================================
-# 1. 페이지 기본 설정 & CSS
+# 1. 페이지 기본 설정 & CSS (2번 사진 대시보드 테마 & 1번 사진 박스 반영)
 # ==========================================
 st.set_page_config(
     page_title="뷰티 트렌드 종합 대시보드",
@@ -18,51 +18,84 @@ st.set_page_config(
 
 st.markdown("""
 <style>
+    /* 2번 사진 참고: 라이트 모드 소프트 블루/그레이 배경 */
     .stApp {
-        background-color: #fcfbf9;
-        color: #212529;
+        background-color: #f4f6f9;
+        color: #1e293b;
     }
-    /* 사진속 코랄 레드 동일 컬러 적용 */
+
+    /* 1번 사진 참고: 커스텀 안내 텍스트 박스 (왼쪽 그린 포인트 라인 + 화이트 카드) */
+    .summary-box {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-left: 5px solid #10b981; /* 1번 사진 왼쪽 그린 라인 */
+        border-radius: 12px;
+        padding: 18px 22px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .summary-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #10b981;
+        margin-bottom: 6px;
+    }
+    .summary-content {
+        font-size: 14px;
+        color: #334155;
+        line-height: 1.6;
+    }
+
+    /* 2번 사진 참고: 멀티셀렉트 카테고리 태그 모던 뱃지 */
     span[data-baseweb="tag"] {
-        background-color: #FF4D4D !important;
+        background-color: #6366f1 !important; /* 2번 사진 포인트 퍼플/블루 */
         color: #ffffff !important;
         border-radius: 6px !important;
+        font-weight: 600 !important;
     }
-    .guide-card {
-        background-color: #ffffff;
-        border: 1px solid #e9ecef;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-        height: 100%;
+
+    /* Streamlit alert 박스 대체 디자인 */
+    .stAlert {
+        background-color: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-left: 5px solid #10b981 !important;
+        border-radius: 12px !important;
+        color: #334155 !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03) !important;
     }
-    
-    /* 탭 메뉴 글씨체 크기 확대 및 스타일 정의 */
+
+    /* 2번 사진 참고: 탭 메뉴 스타일링 */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
-        border-bottom: 2px solid #e9ecef;
+        border-bottom: 2px solid #e2e8f0;
+        background-color: transparent;
     }
     .stTabs [data-baseweb="tab"] {
-        height: 50px;
-        background-color: transparent;
+        height: 48px;
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-bottom: none;
         border-radius: 8px 8px 0 0;
         padding: 0 18px;
-        font-weight: 700;
-        font-size: 16px !important;
-        color: #555555;
+        font-weight: 600;
+        font-size: 15px !important;
+        color: #64748b;
     }
     .stTabs [aria-selected="true"] {
-        background-color: #e8f0f8 !important;
-        color: #044E8D !important;
-        border-bottom: 3px solid #044E8D !important;
-        box-shadow: 0 -2px 6px rgba(0,0,0,0.02);
+        background-color: #ffffff !important;
+        color: #6366f1 !important;
+        border-top: 3px solid #6366f1 !important;
+        border-bottom: none !important;
+        font-weight: 700 !important;
     }
     
-    /* 두번째 사진 박스 맨 왼쪽 파란색 선 -> 초록색(#2E7D32)으로 변경 */
-    .stAlert {
-        background-color: #f1f8e9;
-        border-left: 4px solid #2E7D32 !important;
-        color: #1b5e20;
+    /* 카드 컨테이너 흰색 래핑 */
+    div[data-testid="stMetric"] {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px 20px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -281,14 +314,20 @@ else:
 st.title("🎯 뷰티 트렌드 종합 대시보드")
 st.caption(f"네이버 검색 트렌드 기반 연령대별 검색 관심도 분석 대시보드 ({period_option} 기준)")
 
-col_status1, col_status2 = st.columns([3, 1])
-with col_status1:
-    if is_real_api:
-        st.success(f"🟢 **실시간 네이버 API 데이터 연동 중** (최종 동기화: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')})")
-    else:
-        st.warning("🟡 **DEMO (시뮬레이션) 데이터** - 네이버 API 키를 연동하면 실시간 데이터로 자동 전환됩니다.")
-with col_status2:
-    st.caption("※ 검색 관심도는 절대 검색량이 아닌, 최고 검색 시점을 100으로 설정한 **상대 검색지수**입니다.")
+# 1번 사진 디자인 적용: 상단 상태 박스 커스텀
+if is_real_api:
+    status_text = f"🟢 **실시간 네이버 API 데이터 연동 중** (최종 동기화: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')})"
+    border_color = "#10b981"
+else:
+    status_text = "🟡 **DEMO (시뮬레이션) 데이터** - 네이버 API 키를 연동하면 실시간 데이터로 자동 전환됩니다."
+    border_color = "#f59e0b"
+
+st.markdown(f'''
+<div class="summary-box" style="border-left-color: {border_color};">
+    <div class="summary-title" style="color: {border_color};">시스템 연동 상태</div>
+    <div class="summary-content">{status_text} <br><span style="font-size: 12px; color: #64748b;">※ 검색 관심도는 절대 검색량이 아닌, 최고 검색 시점을 100으로 설정한 상대 검색지수입니다.</span></div>
+</div>
+''', unsafe_allow_html=True)
 
 # ==========================================
 # 6. 핵심 KPI 영역
@@ -307,7 +346,7 @@ if not summary_df.empty:
             )
 
 # ==========================================
-# 7. 트렌드 인사이트 영역
+# 7. 트렌드 인사이트 영역 (1번 사진 디자인 적용)
 # ==========================================
 st.markdown("---")
 st.subheader("💡 검색 데이터 기반 트렌드 인사이트")
@@ -316,15 +355,20 @@ if not summary_df.empty:
     top_interest = summary_df.sort_values(by="최근 7일 상대 검색지수", ascending=False).iloc[0]
     top_growth = summary_df.sort_values(by="WoW 관심도 변화율(%)", ascending=False).iloc[0]
     
-    insight_msg = f"""
-    - **[WHO & WHAT]** **{selected_age}** 연령층에서 가장 높은 검색 관심도를 보이는 카테고리는 **[{top_interest['카테고리']}]** (상대 검색지수 **{top_interest['최근 7일 상대 검색지수']}**) 입니다.
-    - **[WHEN & TREND]** 최근 전주 대비 검색 관심도가 가장 빠르게 상승한 키워드는 **[{top_growth['카테고리']}]** (**+{top_growth['WoW 관심도 변화율(%)']}% WoW**) 입니다.
-    - **[ANALYSIS]** {selected_age} 연령대에서는 단기 관심도 급증 카테고리에 대한 집중적인 소재 기획 및 타겟 마케팅이 유효합니다.
-    """
-    st.info(insight_msg)
+    # 1번 사진 스타일의 깔끔한 인사이트 요약 박스
+    st.markdown(f'''
+    <div class="summary-box">
+        <div class="summary-title">트렌드 종합 요약 인사이트</div>
+        <div class="summary-content">
+            • <b>[WHO & WHAT]</b> <b>{selected_age}</b> 연령층에서 가장 높은 검색 관심도를 보이는 카테고리는 <b>[{top_interest['카테고리']}]</b> (상대 검색지수 <b>{top_interest['최근 7일 상대 검색지수']}</b>) 입니다.<br>
+            • <b>[WHEN & TREND]</b> 최근 전주 대비 검색 관심도가 가장 빠르게 상승한 키워드는 <b>[{top_growth['카테고리']}]</b> (<b>+{top_growth['WoW 관심도 변화율(%)']}% WoW</b>) 입니다.<br>
+            • <b>[ANALYSIS]</b> {selected_age} 연령대에서는 단기 관심도 급증 카테고리에 대한 집중적인 소재 기획 및 타겟 마케팅이 유효합니다.
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
 
 # ==========================================
-# 8. 차트 시각화 (테두리 완전히 제거)
+# 8. 차트 시각화 (2번 사진 퍼플/블루 톤앤매너 적용)
 # ==========================================
 st.markdown("---")
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
@@ -336,7 +380,9 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📋 Raw 데이터 다운로드"
 ])
 
-TRANSPARENT_BLUE = "rgba(4, 78, 141, 0.45)"
+# 2번 사진 참고: 모던 퍼플/블루 톤 차트 테마
+PURPLE_PRIMARY = "#6366f1"
+PURPLE_LIGHT = "rgba(99, 102, 241, 0.45)"
 
 # --- TAB 1: 카테고리별 관심도 ---
 with tab1:
@@ -349,14 +395,14 @@ with tab1:
                 x="카테고리",
                 y="최근 7일 상대 검색지수",
                 text="최근 7일 상대 검색지수",
-                color_discrete_sequence=[TRANSPARENT_BLUE],
+                color_discrete_sequence=[PURPLE_PRIMARY],
                 template="plotly_white"
             )
             fig_bar.update_traces(
                 texttemplate='%{text:.1f}',
                 textposition='outside',
                 width=0.35,
-                marker_line_width=0 # 테두리 완전히 제거
+                marker_line_width=0
             )
             fig_bar.update_layout(
                 showlegend=False,
@@ -364,7 +410,9 @@ with tab1:
                 height=320,
                 margin=dict(l=10, r=10, t=10, b=10),
                 xaxis_title=None,
-                yaxis_title="상대 검색지수"
+                yaxis_title="상대 검색지수",
+                plot_bgcolor='#ffffff',
+                paper_bgcolor='#ffffff'
             )
             st.plotly_chart(fig_bar, use_container_width=True)
             
@@ -377,14 +425,14 @@ with tab1:
                 x="WoW 관심도 변화율(%)",
                 text="WoW 관심도 변화율(%)",
                 orientation='h',
-                color_discrete_sequence=[TRANSPARENT_BLUE],
+                color_discrete_sequence=[PURPLE_LIGHT],
                 template="plotly_white"
             )
             fig_bar_h.update_traces(
                 texttemplate='%{text:+.1f}%',
                 textposition='outside',
                 width=0.35,
-                marker_line_width=0 # 테두리 완전히 제거
+                marker_line_width=0
             )
             fig_bar_h.update_layout(
                 showlegend=False,
@@ -392,11 +440,13 @@ with tab1:
                 height=320,
                 margin=dict(l=10, r=10, t=10, b=10),
                 xaxis_title="WoW 변화율 (%)",
-                yaxis_title=None
+                yaxis_title=None,
+                plot_bgcolor='#ffffff',
+                paper_bgcolor='#ffffff'
             )
             st.plotly_chart(fig_bar_h, use_container_width=True)
 
-# --- TAB 2: 일자별 검색 관심도 추이 ---
+# --- TAB 2: 일자별 검색 관심도 추이 (2번 사진 소프트 라인 차트 스타일) ---
 with tab2:
     st.subheader("일자별 검색 관심도 추이")
     st.caption("선택한 조회 기간 동안의 일자별 상대 검색지수 흐름입니다.")
@@ -404,30 +454,27 @@ with tab2:
     if not trend_df.empty:
         trend_melted = trend_df.melt(id_vars=["date"], var_name="카테고리/키워드", value_name="상대 검색지수")
         
-        blue_shades = [
-            "rgba(4, 78, 141, 0.95)",
-            "rgba(4, 78, 141, 0.75)",
-            "rgba(4, 78, 141, 0.60)",
-            "rgba(4, 78, 141, 0.45)",
-            "rgba(4, 78, 141, 0.30)",
-            "rgba(4, 78, 141, 0.20)"
-        ]
+        # 2번 사진 참고: 선명한 멀티 컬러 쉐이드
+        line_colors = ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6']
         
         fig_line = px.line(
             trend_melted,
             x="date",
             y="상대 검색지수",
             color="카테고리/키워드",
-            color_discrete_sequence=blue_shades,
+            color_discrete_sequence=line_colors,
             template="plotly_white"
         )
+        fig_line.update_traces(line=dict(width=2.5))
         fig_line.update_layout(
             height=360,
             hovermode="x unified",
             margin=dict(l=10, r=10, t=10, b=10),
             xaxis_title="날짜",
             yaxis_title="상대 검색지수",
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, title=None)
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, title=None),
+            plot_bgcolor='#ffffff',
+            paper_bgcolor='#ffffff'
         )
         st.plotly_chart(fig_line, use_container_width=True)
 
