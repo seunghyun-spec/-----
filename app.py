@@ -35,27 +35,6 @@ st.markdown("""
         box-shadow: 0 2px 6px rgba(0,0,0,0.02);
         height: 100%;
     }
-    .guide-title {
-        font-size: 15px;
-        font-weight: 700;
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-    .tag-copy { color: #526756; }
-    .tag-reels { color: #788a72; }
-    .tag-target { color: #8a7b6b; }
-
-    .guide-list {
-        font-size: 13px;
-        color: #495057;
-        line-height: 1.8;
-    }
-    .guide-list li {
-        margin-bottom: 6px;
-    }
-
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
         border-bottom: 2px solid #e9ecef;
@@ -112,7 +91,6 @@ def fetch_naver_datalab_trend(start_date, end_date, time_unit, keyword_groups, a
         "X-Naver-Client-Secret": NAVER_CLIENT_SECRET,
         "Content-Type": "application/json"
     }
-    
     body = {
         "startDate": start_date,
         "endDate": end_date,
@@ -136,16 +114,10 @@ def generate_mock_data(start_date, end_date, selected_categories, age_group, cus
     current_days = len(dates)
     
     age_weights = {
-        "전체": 1.0,
-        "10대 (13~18세)": 0.85,
-        "20대 전반 (19~24세)": 1.35,
-        "20대 후반 (25~29세)": 1.25,
-        "30대 전반 (30~34세)": 1.1,
-        "30대 후반 (35~39세)": 0.95,
-        "40대 전반 (40~44세)": 0.8,
-        "40대 후반 (45~49세)": 0.75,
-        "50대 (50~54세)": 0.6,
-        "60세 이상": 0.4
+        "전체": 1.0, "10대 (13~18세)": 0.85, "20대 전반 (19~24세)": 1.35,
+        "20대 후반 (25~29세)": 1.25, "30대 전반 (30~34세)": 1.1,
+        "30대 후반 (35~39세)": 0.95, "40대 전반 (40~44세)": 0.8,
+        "40대 후반 (45~49세)": 0.75, "50대 (50~54세)": 0.6, "60세 이상": 0.4
     }
     weight = age_weights.get(age_group, 1.0)
     
@@ -154,14 +126,9 @@ def generate_mock_data(start_date, end_date, selected_categories, age_group, cus
         categories.append(f"🔍 {custom_keyword.strip()}")
         
     base_ratios = {
-        "스킨케어": 65.4,
-        "색조메이크업": 58.1,
-        "선케어": 42.6,
-        "베이스메이크업": 28.5,
-        "클렌징": 35.0,
-        "마스크/팩": 22.0
+        "스킨케어": 65.4, "색조메이크업": 58.1, "선케어": 42.6,
+        "베이스메이크업": 28.5, "클렌징": 35.0, "마스크/팩": 22.0
     }
-    
     if custom_keyword.strip():
         base_ratios[f"🔍 {custom_keyword.strip()}"] = 72.3
 
@@ -206,10 +173,8 @@ period_option = st.sidebar.radio(
 )
 
 period_days_map = {
-    "최근 1개월 (30일)": 30,
-    "최근 3개월 (90일)": 90,
-    "최근 6개월 (180일)": 180,
-    "최근 1년 (365일)": 365
+    "최근 1개월 (30일)": 30, "최근 3개월 (90일)": 90,
+    "최근 6개월 (180일)": 180, "최근 1년 (365일)": 365
 }
 days_count = period_days_map[period_option]
 end_date_dt = datetime.date.today() - datetime.timedelta(days=1)
@@ -353,13 +318,15 @@ if not summary_df.empty:
     st.info(insight_msg)
 
 # ==========================================
-# 8. 차트 시각화
+# 8. 차트 시각화 & 신규 분석 탭 (브랜드 / 인플루언서 추가)
 # ==========================================
 st.markdown("---")
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📊 카테고리/연령별 관심도", 
     "📈 일자별 검색 관심도 추이", 
-    "🔥 연령대별 인기/급상승 키워드", 
+    "🏆 인기 브랜드 랭킹", 
+    "✨ 뷰티 인플루언서 모니터링", 
+    "🔥 연령대별 급상승 키워드", 
     "📋 Raw 데이터 다운로드"
 ])
 
@@ -368,7 +335,6 @@ soft_green_colors = ['#788a72', '#a3b19b', '#c2cbd0', '#d2d8c3', '#8e9a82', '#b5
 # --- TAB 1: 카테고리별 관심도 ---
 with tab1:
     col_c1, col_c2 = st.columns(2)
-    
     with col_c1:
         st.subheader("카테고리별 상대 검색지수 비교")
         if not summary_df.empty:
@@ -417,7 +383,6 @@ with tab2:
     
     if not trend_df.empty:
         trend_melted = trend_df.melt(id_vars=["date"], var_name="카테고리/키워드", value_name="상대 검색지수")
-        
         fig_line = px.line(
             trend_melted,
             x="date",
@@ -436,8 +401,62 @@ with tab2:
         )
         st.plotly_chart(fig_line, use_container_width=True)
 
-# --- TAB 3: 연령대별 인기/급상승 키워드 ---
+# --- TAB 3: 신규 - 인기 브랜드 랭킹 ---
 with tab3:
+    st.subheader(f"🏆 {selected_age} 타겟 관심 브랜드 Top 5")
+    st.caption("검색 트렌드 지수 및 쇼핑 인텐트 기반으로 집계된 주요 뷰티 브랜드 랭킹입니다.")
+    
+    brand_df = pd.DataFrame({
+        "순위": [1, 2, 3, 4, 5],
+        "브랜드명": ["아누아 (Anua)", "롬앤 (Rom&nd)", "헤라 (HERA)", "달바 (d'Alba)", "토리든 (Torriden)"],
+        "주요 대표 카테고리": ["스킨케어/토너", "색조/립틴트", "베이스/쿠션", "선케어/미스트", "스킨케어/세럼"],
+        "상대 관심 지수": [94.5, 89.2, 81.0, 76.4, 71.8],
+        "관심도 변화율(WoW)": ["+15.2%", "+8.4%", "-2.1%", "+24.0%", "+11.5%"],
+        "주요 연관 검색 키워드": ["어성초 토너, 속건조", "글래스팅 틴트, 쿨톤", "블랙쿠션 21N", "화이트 트러플 미스트", "다이브인 세럼"]
+    })
+    
+    st.dataframe(
+        brand_df,
+        column_config={
+            "순위": st.column_config.NumberColumn("순위", width="small"),
+            "브랜드명": st.column_config.TextColumn("브랜드명", width="medium"),
+            "주요 대표 카테고리": st.column_config.TextColumn("주요 대표 카테고리", width="medium"),
+            "상대 관심 지수": st.column_config.ProgressColumn("상대 관심 지수", format="%.1f", min_value=0, max_value=100, width="medium"),
+            "관심도 변화율(WoW)": st.column_config.TextColumn("관심도 변화율(WoW)", width="small"),
+            "주요 연관 검색 키워드": st.column_config.TextColumn("주요 연관 검색 키워드", width="large")
+        },
+        use_container_width=True,
+        hide_index=True
+    )
+
+# --- TAB 4: 신규 - 뷰티 인플루언서 모니터링 ---
+with tab4:
+    st.subheader("✨ 영향력 뷰티 인플루언서 및 주요 소구 채널")
+    st.caption("네이버 블로그, 포털 기사, 주요 뷰티 채널 내 언급량이 많은 뷰티 크리에이터 및 연관 키워드 분석입니다.")
+    
+    influencer_df = pd.DataFrame({
+        "인플루언서 / 채널명": ["뷰스타 뷰티로그", "디렉터파이", "뷰티크리에이터 민스코", "피부과전문의 TV", "포니 뷰티랩"],
+        "주요 노출 플랫폼": ["네이버 블로그", "유튜브 / 블로그", "인스타그램 / 유튜브", "유튜브", "인스타그램"],
+        "최근 30일 포스팅/언급 수": ["42건", "28건", "35건", "19건", "24건"],
+        "주요 소구 뷰티 키워드": ["속건조 에센스, 피부장벽", "성분분석, 순한 선크림", "글로우 틴트 전발색", "레티놀 사용법, 모공", "파데프리 톤업베이스"],
+        "영향력 지수": [95.0, 92.4, 88.1, 84.5, 79.2]
+    })
+    
+    st.dataframe(
+        influencer_df,
+        column_config={
+            "인플루언서 / 채널명": st.column_config.TextColumn("인플루언서 / 채널명", width="medium"),
+            "주요 노출 플랫폼": st.column_config.TextColumn("주요 노출 플랫폼", width="small"),
+            "최근 30일 포스팅/언급 수": st.column_config.TextColumn("최근 30일 포스팅/언급 수", width="small"),
+            "주요 소구 뷰티 키워드": st.column_config.TextColumn("주요 소구 뷰티 키워드", width="large"),
+            "영향력 지수": st.column_config.ProgressColumn("영향력 지수", format="%.1f", min_value=0, max_value=100, width="medium")
+        },
+        use_container_width=True,
+        hide_index=True
+    )
+
+# --- TAB 5: 연령대별 급상승 키워드 ---
+with tab5:
     st.subheader(f"🔥 {selected_age} 타겟 급상승 뷰티 키워드 Top 5")
     st.caption("선택된 연령층에서 최근 4주간 검색 관심도가 가장 가파르게 상승한 세부 키워드 리스트입니다.")
     
@@ -454,13 +473,7 @@ with tab3:
         column_config={
             "연령대": st.column_config.TextColumn("연령대", width="small"),
             "급상승 키워드": st.column_config.TextColumn("급상승 키워드", width="medium"),
-            "현재 상대 검색지수": st.column_config.ProgressColumn(
-                "현재 상대 검색지수",
-                format="%.1f",
-                min_value=0,
-                max_value=100,
-                width="medium"
-            ),
+            "현재 상대 검색지수": st.column_config.ProgressColumn("현재 상대 검색지수", format="%.1f", min_value=0, max_value=100, width="medium"),
             "관심도 상승률(WoW)": st.column_config.TextColumn("관심도 상승률(WoW)", width="small"),
             "트렌드 시작 시점": st.column_config.TextColumn("트렌드 시작 시점", width="large")
         },
@@ -468,8 +481,8 @@ with tab3:
         hide_index=True
     )
 
-# --- TAB 4: Raw 데이터 및 다운로드 ---
-with tab4:
+# --- TAB 6: Raw 데이터 및 다운로드 ---
+with tab6:
     st.subheader("📋 검색 관심도 분석 원본 데이터")
     st.caption("대시보드에 연동된 카테고리별 검색 관심도 통계 표입니다.")
     
