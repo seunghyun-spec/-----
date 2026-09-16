@@ -23,7 +23,7 @@ st.markdown("""
         color: #212529;
     }
     span[data-baseweb="tag"] {
-        background-color: #4a4d52 !important;
+        background-color: #00897B !important;
         color: #ffffff !important;
         border-radius: 6px !important;
     }
@@ -48,15 +48,15 @@ st.markdown("""
         color: #7d7d7d;
     }
     .stTabs [aria-selected="true"] {
-        background-color: #f1f3f5 !important;
-        color: #212529 !important;
-        border-bottom: 3px solid #4a4d52 !important;
+        background-color: #e0f2f1 !important;
+        color: #004d40 !important;
+        border-bottom: 3px solid #00897B !important;
         box-shadow: 0 -2px 6px rgba(0,0,0,0.02);
     }
     .stAlert {
-        background-color: #f8f9fa;
-        border-left: 4px solid #6c757d;
-        color: #212529;
+        background-color: #e0f2f1;
+        border-left: 4px solid #00897B;
+        color: #004d40;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -161,7 +161,7 @@ def generate_mock_data(start_date, end_date, selected_categories, age_group, cus
     return trend_df, summary_df
 
 # ==========================================
-# 3. 사이드바 UI
+# 3. 사이드바 UI (카테고리 항목 추가)
 # ==========================================
 st.sidebar.title("💄 대시보드 필터")
 
@@ -190,7 +190,8 @@ selected_age = st.sidebar.selectbox(
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("🏷️ 카테고리 필터")
-default_categories = ["스킨케어", "선케어", "색조메이크업", "베이스메이크업"]
+# 항목 확장: 클렌징, 마스크/팩 기본 포함
+default_categories = ["스킨케어", "선케어", "색조메이크업", "베이스메이크업", "클렌징", "마스크/팩"]
 selected_categories = st.sidebar.multiselect(
     "비교 카테고리",
     options=["스킨케어", "선케어", "색조메이크업", "베이스메이크업", "클렌징", "마스크/팩"],
@@ -318,7 +319,7 @@ if not summary_df.empty:
     st.info(insight_msg)
 
 # ==========================================
-# 8. 차트 시각화 & 신규 분석 탭 (브랜드 / 인플루언서 추가)
+# 8. 차트 시각화 (막대 얇게 + 쨍한 색상 팔레트)
 # ==========================================
 st.markdown("---")
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
@@ -330,7 +331,8 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📋 Raw 데이터 다운로드"
 ])
 
-soft_green_colors = ['#788a72', '#a3b19b', '#c2cbd0', '#d2d8c3', '#8e9a82', '#b5c0ad']
+# 쨍하고 세련된 비비드 틸 & 그린 컬러 팔레트
+vivid_colors = ['#00A86B', '#00C9A7', '#00E676', '#1DE9B6', '#00BFA5', '#64DD17', '#AEEA00']
 
 # --- TAB 1: 카테고리별 관심도 ---
 with tab1:
@@ -343,11 +345,18 @@ with tab1:
                 x="카테고리",
                 y="최근 7일 상대 검색지수",
                 text="최근 7일 상대 검색지수",
-                color_discrete_sequence=['#788a72'],
+                color="카테고리",
+                color_discrete_sequence=vivid_colors,
                 template="plotly_white"
             )
-            fig_bar.update_traces(texttemplate='%{text:.1f}', textposition='outside')
+            fig_bar.update_traces(
+                texttemplate='%{text:.1f}',
+                textposition='outside',
+                width=0.35 # 막대 굵기 얇게 조절
+            )
             fig_bar.update_layout(
+                showlegend=False,
+                bargap=0.4, # 여백 넓혀 슬림하게 변경
                 height=320,
                 margin=dict(l=10, r=10, t=10, b=10),
                 xaxis_title=None,
@@ -364,11 +373,18 @@ with tab1:
                 x="WoW 관심도 변화율(%)",
                 text="WoW 관심도 변화율(%)",
                 orientation='h',
-                color_discrete_sequence=['#a3b19b'],
+                color="카테고리",
+                color_discrete_sequence=vivid_colors,
                 template="plotly_white"
             )
-            fig_bar_h.update_traces(texttemplate='%{text:+.1f}%', textposition='outside')
+            fig_bar_h.update_traces(
+                texttemplate='%{text:+.1f}%',
+                textposition='outside',
+                width=0.35 # 가로 막대 굵기 얇게 조절
+            )
             fig_bar_h.update_layout(
+                showlegend=False,
+                bargap=0.4,
                 height=320,
                 margin=dict(l=10, r=10, t=10, b=10),
                 xaxis_title="WoW 변화율 (%)",
@@ -388,7 +404,7 @@ with tab2:
             x="date",
             y="상대 검색지수",
             color="카테고리/키워드",
-            color_discrete_sequence=soft_green_colors,
+            color_discrete_sequence=vivid_colors,
             template="plotly_white"
         )
         fig_line.update_layout(
@@ -401,7 +417,7 @@ with tab2:
         )
         st.plotly_chart(fig_line, use_container_width=True)
 
-# --- TAB 3: 신규 - 인기 브랜드 랭킹 ---
+# --- TAB 3: 인기 브랜드 랭킹 ---
 with tab3:
     st.subheader(f"🏆 {selected_age} 타겟 관심 브랜드 Top 5")
     st.caption("검색 트렌드 지수 및 쇼핑 인텐트 기반으로 집계된 주요 뷰티 브랜드 랭킹입니다.")
@@ -429,7 +445,7 @@ with tab3:
         hide_index=True
     )
 
-# --- TAB 4: 신규 - 뷰티 인플루언서 모니터링 ---
+# --- TAB 4: 뷰티 인플루언서 모니터링 ---
 with tab4:
     st.subheader("✨ 영향력 뷰티 인플루언서 및 주요 소구 채널")
     st.caption("네이버 블로그, 포털 기사, 주요 뷰티 채널 내 언급량이 많은 뷰티 크리에이터 및 연관 키워드 분석입니다.")
